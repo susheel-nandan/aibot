@@ -1,0 +1,8 @@
+streamlit
+langchain
+langchain-google-genai
+langchain-chroma
+pypdf
+python-dotenv
+sqlalchemy
+pydantic

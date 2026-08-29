@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Databases
+*.sqlite
+*.db
+chroma_db/
+
+# Streamlit secrets (CRITICAL to ignore)
+.streamlit/secrets.toml
+
+# OS files
+.DS_Store
