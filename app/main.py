@@ -1,5 +1,9 @@
 import streamlit as st
 import os
+import sys
+
+# Add project root to sys.path to resolve ModuleNotFoundError on Streamlit Cloud
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Set page config at the very beginning
 st.set_page_config(page_title="AI Booking Assistant", page_icon="📅", layout="wide")
