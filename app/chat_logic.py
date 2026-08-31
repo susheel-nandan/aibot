@@ -1,21 +1,20 @@
 import os
 import streamlit as st
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain.memory import ConversationBufferWindowMemory
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_groq import ChatGroq
+from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
 
 from app.tools import rag_tool, booking_persistence_tool, email_tool
 
 def get_agent_executor():
     # Setup LLM
-    gemini_api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
-    if not gemini_api_key:
-        raise ValueError("GEMINI_API_KEY is missing. Please add it to .streamlit/secrets.toml")
+    groq_api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
+    if not groq_api_key:
+        raise ValueError("GROQ_API_KEY is missing. Please add it to .streamlit/secrets.toml")
 
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-pro-latest", 
-        google_api_key=gemini_api_key,
+    llm = ChatGroq(
+        model="openai/gpt-oss-120b", 
+        api_key=groq_api_key,
         temperature=0.2
     )
 
@@ -45,30 +44,19 @@ def get_agent_executor():
     If the user asks general questions about the clinic (services, prices, FAQs), use the `rag_tool`.
     """
     
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        MessagesPlaceholder(variable_name="chat_history"),
-        ("user", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
-
     # Memory
-    if "memory" not in st.session_state:
-        st.session_state.memory = ConversationBufferWindowMemory(
-            memory_key="chat_history", 
-            k=25, 
-            return_messages=True
-        )
+    if "memory_saver" not in st.session_state:
+        st.session_state.memory_saver = MemorySaver()
 
-    agent = create_tool_calling_agent(llm, tools, prompt)
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=st.session_state.memory)
+    agent = create_react_agent(llm, tools, prompt=system_prompt, checkpointer=st.session_state.memory_saver)
     
-    return agent_executor
+    return agent
 
 def process_message(user_input: str) -> str:
-    agent_executor = get_agent_executor()
+    agent = get_agent_executor()
     try:
-        response = agent_executor.invoke({"input": user_input})
-        return response["output"]
+        config = {"configurable": {"thread_id": "streamlit_session"}}
+        response = agent.invoke({"messages": [("user", user_input)]}, config=config)
+        return response["messages"][-1].content
     except Exception as e:
         return f"An error occurred: {str(e)}"

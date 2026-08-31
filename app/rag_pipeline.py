@@ -44,7 +44,7 @@ def process_uploaded_pdfs(uploaded_files):
         raise ValueError("GEMINI_API_KEY is missing.")
 
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/embedding-001", 
+        model="models/gemini-embedding-2", 
         google_api_key=gemini_api_key
     )
     
@@ -64,7 +64,7 @@ def get_retriever():
         return None
         
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/embedding-001", 
+        model="models/gemini-embedding-2", 
         google_api_key=gemini_api_key
     )
     
